@@ -14,6 +14,8 @@ from queue import Queue
 r = sr.Recognizer()
 mic = sr.Microphone()
 audio_queue = Queue()
+
+#Recognized message
 msg = None
 
 def recognize_worker():
