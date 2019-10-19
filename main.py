@@ -1,5 +1,3 @@
-#Bluetooth
-import pygatt
 
 #Kivy and GUI
 import kivy 
@@ -14,15 +12,10 @@ import speech_recognition as sr
 from threading import Thread
 from queue import Queue
 
-import bluetooth
-
 # Record Audio
 r = sr.Recognizer()
 mic = sr.Microphone()
 audio_queue = Queue()
-
-#Bluetooth adapter
-adapter = pygatt.GATTToolBackend()
 
 #Recognized message
 msg = None
