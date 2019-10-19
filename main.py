@@ -1,3 +1,7 @@
+#Bluetooth
+import pygatt
+
+#Kivy and GUI
 import kivy 
 from kivy.app import App
 from kivy.uix.label import Label
@@ -5,6 +9,7 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 
+#Speech recognition
 import speech_recognition as sr
 from threading import Thread
 from queue import Queue
@@ -15,6 +20,9 @@ import bluetooth
 r = sr.Recognizer()
 mic = sr.Microphone()
 audio_queue = Queue()
+
+#Bluetooth adapter
+adapter = pygatt.GATTToolBackend()
 
 #Recognized message
 msg = None
@@ -74,16 +82,15 @@ class VoiceApp(App):
         return mainlayout
 
     def on_click(self, btn, state):
-        if(state == "down"):
+        if(state == "down" and self.state == self.IDLE_STATE):
             self.state = self.RECORD_STATE
             self.stateText.text = "Recording..."
 
     def on_start(self):
-        if(self.state == self.IDLE_STATE):
-            # start a new thread to recognize audio, while this thread focuses on listening
-            self.recognize_thread = Thread(target=recognize_worker)
-            self.recognize_thread.daemon = True
-            self.recognize_thread.start()
+        # start a new thread to recognize audio, while this thread focuses on listening
+        self.recognize_thread = Thread(target=recognize_worker)
+        self.recognize_thread.daemon = True
+        self.recognize_thread.start()
 
     def on_stop(self):
         audio_queue.join()  # block until all current audio processing jobs are done
