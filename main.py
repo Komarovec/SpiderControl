@@ -52,6 +52,16 @@ class VoiceApp(App):
         mainlayout = BoxLayout(orientation="horizontal")
         layout = BoxLayout(orientation="vertical")
 
+        #Commands
+        commands = {
+            "attention 1":[0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00],
+            "attention one":[0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00],
+            "attention":[0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00],
+
+            "attention 3":[0x55, 0x55, 0x05, 0x06, 0x05, 0x01, 0x00],
+            "attention three":[0x55, 0x55, 0x05, 0x06, 0x05, 0x01, 0x00],
+        }
+
         #Important vars
         self.state = self.IDLE_STATE
 
@@ -79,17 +89,45 @@ class VoiceApp(App):
             self.state = self.RECORD_STATE
             self.stateText.text = "Recording..."
 
+    #When window created
     def on_start(self):
         # start a new thread to recognize audio, while this thread focuses on listening
         self.recognize_thread = Thread(target=recognize_worker)
         self.recognize_thread.daemon = True
         self.recognize_thread.start()
 
+        #Import after kivy
+        from BLE import BLECom
+        self.BLE = BLECom()
+
+    #When exiting
     def on_stop(self):
         audio_queue.join()  # block until all current audio processing jobs are done
         audio_queue.put(None)  # tell the recognize_thread to stop
         self.recognize_thread.join()  # wait for the recognize_thread to actually stop
 
+        self.BLE.endThread()
+        self.BLE.th.join()
+
+    #Send appropriate command to bluetooth
+    def checkCommand(self, msg):
+        if(msg == "attention 1" or msg == "attention one" or msg == "attention" or msg == "stop"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00])
+        elif(msg == "attention 3" or msg == "attention three"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x05, 0x01, 0x00])
+        elif(msg == "go forward" or msg == "forward"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x01, 0x00, 0x00])
+        elif(msg == "go backward" or msg == "backward"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x02, 0x00, 0x00])
+        elif(msg == "turn left" or msg == "left" or msg == "go left"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x03, 0x00, 0x00])
+        elif(msg == "turn right" or msg == "right" or msg == "go right"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x04, 0x00, 0x00])
+        elif(msg == "dance"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x0A, 0x00, 0x00])
+        
+
+    #Kivy loop
     def think(self, dt):
         global msg
 
@@ -102,6 +140,10 @@ class VoiceApp(App):
         elif(msg != None):
             self.state = self.IDLE_STATE
             self.stateText.text = msg
+
+            #Check for command
+            self.checkCommand(msg)
+
             msg = None
 
 
