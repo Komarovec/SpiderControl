@@ -1,4 +1,5 @@
 
+
 #Kivy and GUI
 import kivy 
 from kivy.app import App
@@ -6,11 +7,17 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
+from kivy.core.window import Window
+from kivy.uix.widget import Widget
 
 #Speech recognition
 import speech_recognition as sr
 from threading import Thread
+
+#Kolem
+from functools import partial
 from queue import Queue
+
 
 # Record Audio
 r = sr.Recognizer()
@@ -44,31 +51,34 @@ def record(*args):
             pass
 
 class VoiceApp(App):
+    #States
     IDLE_STATE = "idle"
     RECORD_STATE = "record"
     RECOGNIZE_STATE = "recognize"
 
     def build(self):
+        #Keyboard init
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self, 'text')
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+
+        #Init layout
         mainlayout = BoxLayout(orientation="horizontal")
         layout = BoxLayout(orientation="vertical")
 
-        #Commands
-        commands = {
-            "attention 1":[0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00],
-            "attention one":[0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00],
-            "attention":[0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00],
-
-            "attention 3":[0x55, 0x55, 0x05, 0x06, 0x05, 0x01, 0x00],
-            "attention three":[0x55, 0x55, 0x05, 0x06, 0x05, 0x01, 0x00],
-        }
-
         #Important vars
+        self.lastAction = None
         self.state = self.IDLE_STATE
+        self.position = 0 #0 - Low, 1 - Mid, 2 - High 
+        self.step = 0 #0 - Small, 1 - Large
 
-        #Action button
+        #Record button
         self.stateText = Label(text="Idle")
-        btn = Button(text="Click to start recording.")
-        btn.bind(state=self.on_click)
+        recBtn = Button(text="Click to start recording.")
+        recBtn.bind(state=self.on_click_rec)
+
+        #Stop
+        stopBtn = Button(text="Stop")
+        stopBtn.bind(on_press=partial(self.takeAction, "stop"))
 
         #Main layout preparation
         mainlayout.add_widget(Label(text=""))
@@ -77,14 +87,14 @@ class VoiceApp(App):
 
         #Sublayout preparation
         layout.add_widget(self.stateText)
-        layout.add_widget(btn)
-        layout.add_widget(Label(text=""))
+        layout.add_widget(recBtn)
+        layout.add_widget(stopBtn)
 
         Clock.schedule_interval(self.think, 1/60)
 
         return mainlayout
 
-    def on_click(self, btn, state):
+    def on_click_rec(self, btn, state):
         if(state == "down" and self.state == self.IDLE_STATE):
             self.state = self.RECORD_STATE
             self.stateText.text = "Recording..."
@@ -119,13 +129,47 @@ class VoiceApp(App):
             self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x01, 0x00, 0x00])
         elif(msg == "go backward" or msg == "backward"):
             self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x02, 0x00, 0x00])
+
         elif(msg == "turn left" or msg == "left" or msg == "go left"):
             self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x03, 0x00, 0x00])
         elif(msg == "turn right" or msg == "right" or msg == "go right"):
             self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x04, 0x00, 0x00])
+
         elif(msg == "dance"):
             self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x0A, 0x00, 0x00])
         
+    #Take action
+    def takeAction(self, action, *_):
+        #Reapeted action protection
+        if(self.lastAction == action):
+            return
+        self.lastAction = action
+
+        #Position change
+        if(action == "top" or action == "numpad9"):
+            pass
+        elif(action == "mid" or action == "numpad6"):
+            pass
+        elif(action == "low" or action == "numpad3"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00])
+
+        #Direction change
+        elif(action == "stop" or action == "r"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00])
+        elif(action == "forward" or action == "up"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x01, 0x00, 0x00])
+        elif(action == "backward" or action == "down"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x02, 0x00, 0x00])   
+        elif(action == "left"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x03, 0x00, 0x00])
+        elif(action == "right"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x04, 0x00, 0x00])
+
+        #Special
+        elif(action == "dance" or action == "d"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x0A, 0x00, 0x00])
+        elif(action == "hi" or action == "h"):
+            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x0B, 0x00, 0x00])
 
     #Kivy loop
     def think(self, dt):
@@ -145,6 +189,18 @@ class VoiceApp(App):
             self.checkCommand(msg)
 
             msg = None
+
+    #Keyboard interface
+    def _keyboard_closed(self):
+        print('My keyboard have been closed!')
+        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        print('The key', keycode[1], 'have been pressed')
+        self.takeAction(keycode[1])
+        
+        return True
 
 
 if __name__ == '__main__':
