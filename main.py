@@ -9,6 +9,7 @@ import speech_recognition as sr
 from threading import Thread
 from queue import Queue
 
+import bluetooth
 
 # Record Audio
 r = sr.Recognizer()
