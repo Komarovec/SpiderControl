@@ -7,15 +7,23 @@ import time
 
 class BLECom():
     def __init__(self, *args):
+        self.connection = False
         self.address = "A8:10:87:47:3D:C0"
         self.DATA_IO = "0000ffe1-0000-1000-8000-00805f9b34fb"
-        self.msg_queue = Queue()
-        self.th = Thread(target=self.startBluetooth)
-        self.th.start()
+        self.startThread()
+        self.exit = False # Exits thread next loop
 
     #Join thread when exiting
     def endThread(self, *args):
+        self.exit = True
         self.msg_queue.put(None)
+
+    #Starts thread
+    def startThread(self, *args):
+        self.exit = False
+        self.msg_queue = Queue()
+        self.th = Thread(target=self.startBluetooth)
+        self.th.start()
 
     #Send msg
     def sendMsg(self, msg):
@@ -27,23 +35,32 @@ class BLECom():
 
     #Threaded workload send and receives bytes via BLE
     async def run(self, address, uuid, loop):
-        try:
-            async with BleakClient(address, loop=loop) as client:
-                while True:
-                    #Check if queue is empty
-                    if(self.msg_queue.empty()):
-                        msg = None
-                    else:
-                        msg = self.msg_queue.get()
-                        #If none then end thread
-                        if(msg == None):
+        #Connecting loop
+        while True:
+            try:
+                async with BleakClient(address, loop=loop) as client:
+                    #Sending loop
+                    while True:
+                        self.connection = await client.is_connected()
+                        if(not self.connection):
                             break
 
-                    if(msg != None):
-                        await client.write_gatt_char(uuid, bytearray(msg))
-                        self.msg_queue.task_done()
-        except:
-            print("Cannot connect")
+                        #Check if queue is empty
+                        if(self.msg_queue.empty()):
+                            msg = None
+                        else:
+                            msg = self.msg_queue.get()
+                            #If none then end thread
+                            if(msg == None or self.exit):
+                                return
+
+                        if(msg != None):
+                            print(await client.write_gatt_char(uuid, bytearray(msg)))
+                            self.msg_queue.task_done()
+            except:
+                #End thread on exit
+                if(self.exit):
+                    return
 
     #Called in new thread!!
     def startBluetooth(self):
