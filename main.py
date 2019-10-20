@@ -147,29 +147,69 @@ class VoiceApp(App):
 
         #Position change
         if(action == "top" or action == "numpad9"):
-            pass
+            self.BLE.sendCmd(34,1)
+            self.position = 2
         elif(action == "mid" or action == "numpad6"):
-            pass
+            self.BLE.sendCmd(25,1)
+            self.position = 1
         elif(action == "low" or action == "numpad3"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00])
+            self.BLE.sendCmd(0,1)
+            self.position = 0
 
-        #Direction change
+        #Stop any movement
         elif(action == "stop" or action == "r"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00])
+            if(self.position == 2):
+                self.BLE.sendCmd(34,1)
+            elif(self.position == 1):
+                self.BLE.sendCmd(25,1)
+            elif(self.position == 0):
+                self.BLE.sendCmd(0,1)    
+    
+        #Go forward
         elif(action == "forward" or action == "up"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x01, 0x00, 0x00])
+            if(self.position == 2):
+                self.BLE.sendCmd(35,0)
+            elif(self.position == 1):
+                self.BLE.sendCmd(26,0)
+            elif(self.position == 0):
+                self.BLE.sendCmd(1,0) 
+
+        #Go backward
         elif(action == "backward" or action == "down"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x02, 0x00, 0x00])   
+            if(self.position == 2):
+                self.BLE.sendCmd(36,0)
+            elif(self.position == 1):
+                self.BLE.sendCmd(27,0)
+            elif(self.position == 0):
+                self.BLE.sendCmd(2,0)  
+
+        #Go left
         elif(action == "left"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x03, 0x00, 0x00])
+            if(self.position == 2):
+                self.BLE.sendCmd(37,0)
+            elif(self.position == 1):
+                self.BLE.sendCmd(28,0)
+            elif(self.position == 0):
+                self.BLE.sendCmd(3,0) 
+
+        #Go right
         elif(action == "right"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x04, 0x00, 0x00])
+            if(self.position == 2):
+                self.BLE.sendCmd(38,0)
+            elif(self.position == 1):
+                self.BLE.sendCmd(29,0)
+            elif(self.position == 0):
+                self.BLE.sendCmd(4,0) 
 
         #Special
         elif(action == "dance" or action == "d"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x0A, 0x00, 0x00])
+            self.BLE.sendCmd(9,1) 
         elif(action == "hi" or action == "h"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x0B, 0x00, 0x00])
+            self.BLE.sendCmd(12,1)
+        elif(action == "fight" or action == "f"):
+            self.BLE.sendCmd(10,1)  
+        elif(action == "kick" or action == "k"):
+            self.BLE.sendCmd(11,1)  
 
     #Kivy loop
     def think(self, dt):

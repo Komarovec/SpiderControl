@@ -21,6 +21,10 @@ class BLECom():
     def sendMsg(self, msg):
         self.msg_queue.put(msg)
 
+    #Sends adds command number to hex-string and send to BLE class
+    def sendCmd(self, cmd, rep):
+        self.sendMsg([0x55, 0x55, 0x05, 0x06, cmd, rep, 0x00])
+
     #Threaded workload send and receives bytes via BLE
     async def run(self, address, uuid, loop):
         try:
