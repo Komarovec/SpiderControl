@@ -58,7 +58,7 @@ class VoiceApp(App):
 
     def build(self):
         #Keyboard init
-        self._keyboard = Window.request_keyboard(self._keyboard_closed, self, 'text')
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self.root, 'text')
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
         #Init layout
@@ -210,6 +210,8 @@ class VoiceApp(App):
             self.BLE.sendCmd(10,1)  
         elif(action == "kick" or action == "k"):
             self.BLE.sendCmd(11,1)  
+        elif(action == "pack" or action == "p"):
+            self.BLE.sendCmd(100,1)
 
     #Kivy loop
     def think(self, dt):
