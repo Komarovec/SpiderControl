@@ -10,44 +10,13 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
+from kivy.properties import NumericProperty
 
-#Speech recognition
-import speech_recognition as sr
-from threading import Thread
-
-#Kolem
+#Function tools
 from functools import partial
-from queue import Queue
 
-
-# Record Audio
-r = sr.Recognizer()
-mic = sr.Microphone()
-audio_queue = Queue()
-
-#Recognized message
-msg = None
-
-def recognize_worker():
-    global msg
-    while True:
-        # this runs in a background thread
-        audio = audio_queue.get()  # retrieve the next audio processing job from the main thread
-        if audio is None: return  # stop processing if the main thread is done
-
-        try:
-            msg = r.recognize_google(audio)
-        except:
-            msg = "Cannot recognize!"
-
-        audio_queue.task_done()  # mark the audio processing job as completed in the queue
-
-def callback(recognizer, audio):
-    audio_queue.put(audio)
-
-def record(*args):
-    global stop_listening
-    stop_listening = r.listen_in_background(mic, callback)
+#Custom
+from Recognizer import Recognizer
 
 class VoiceApp(App):
     #States
@@ -69,15 +38,20 @@ class VoiceApp(App):
     }
 
     def build(self):
+        #Recognizer object
+        self.recog = Recognizer()
+
         #Keyboard init
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self.root, 'text')
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
         #Init layout
         mainlayout = BoxLayout(orientation="horizontal")
-        layout = BoxLayout(orientation="vertical")
+        layoutLeft = BoxLayout(orientation="vertical")
+        layoutMid = BoxLayout(orientation="vertical")
+        layoutRight = BoxLayout(orientation="vertical")
 
-        #Important vars
+        #Control vars
         self.lastAction = None
         self.state = self.IDLE_STATE
         self.position = 0 #0 - Low, 1 - Mid, 2 - High 
@@ -92,35 +66,48 @@ class VoiceApp(App):
         stopBtn = Button(text="Stop")
         stopBtn.bind(on_press=partial(self.takeAction, "stop"))
 
-        #Main layout preparation
-        mainlayout.add_widget(Label(text=""))
-        mainlayout.add_widget(layout)
-        mainlayout.add_widget(Label(text=""))
+        #Kivy properties
+        self.queueSize = NumericProperty(0)
 
-        #Sublayout preparation
-        layout.add_widget(self.stateText)
-        layout.add_widget(recBtn)
-        layout.add_widget(stopBtn)
+        #Taken action
+        self.actionLabel = Label(text="Action: ")
+
+        #Bluetooth connection
+        self.bleLabel = Label(text="Not connected")
+
+        #Audio queue to proces
+        self.queueLabel = Label(text="To procces: "+str(self.queueSize))
+
+        #Main layout preparation
+        mainlayout.add_widget(layoutLeft)
+        mainlayout.add_widget(layoutMid)
+        mainlayout.add_widget(layoutRight)
+
+        #Middle layout
+        layoutMid.add_widget(self.stateText)
+        layoutMid.add_widget(recBtn)
+        layoutMid.add_widget(stopBtn)
+
+        #Left layout
+        layoutLeft.add_widget(self.actionLabel)
+        layoutLeft.add_widget(self.bleLabel)
+        layoutLeft.add_widget(self.queueLabel)
 
         Clock.schedule_interval(self.think, 1/60)
 
         return mainlayout
 
     def on_click_rec(self, btn, state):
-        global stop_listening
-
         if(state == "down" and self.state == self.IDLE_STATE):
             self.state = self.RECORD_STATE
-            record()
+            self.recog.record()
         elif(state == "up"):
-            stop_listening(wait_for_stop=False)
+            self.recog.stopRecord()
 
     #When window created
     def on_start(self):
         # start a new thread to recognize audio, while this thread focuses on listening
-        self.recognize_thread = Thread(target=recognize_worker)
-        self.recognize_thread.daemon = True
-        self.recognize_thread.start()
+        self.recog.start()
 
         #Import after kivy
         from BLE import BLECom
@@ -128,11 +115,7 @@ class VoiceApp(App):
 
     #When exiting
     def on_stop(self):
-        global stop_listening
-        stop_listening(wait_for_stop=False)
-        audio_queue.join()  # block until all current audio processing jobs are done
-        audio_queue.put(None)  # tell the recognize_thread to stop
-        self.recognize_thread.join()  # wait for the recognize_thread to actually stop
+        self.recog.stop()
 
         self.BLE.endThread()
         self.BLE.th.join()
@@ -230,7 +213,7 @@ class VoiceApp(App):
 
     #Kivy loop
     def think(self, dt):
-        global msg
+        msg = self.recog.msg
 
         #If recording
         if(msg != None):
@@ -240,7 +223,8 @@ class VoiceApp(App):
             #Check for command
             self.checkCommand(msg)
 
-            msg = None
+            #Delete message after being sent
+            self.recog.msg = None
 
     #Keyboard interface
     def _keyboard_closed(self):

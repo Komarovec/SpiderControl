@@ -4,7 +4,6 @@ from bleak import discover, BleakClient
 from queue import Queue
 import time
 
-
 class BLECom():
     def __init__(self, *args):
         self.connection = False
