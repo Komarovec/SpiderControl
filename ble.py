@@ -5,7 +5,8 @@ from queue import Queue
 import time
 
 class BLECom():
-    def __init__(self, *args):
+    def __init__(self, callback, *args):
+        self.changeStateCallback = callback
         self.connection = False
         self.address = "A8:10:87:47:3D:C0"
         self.DATA_IO = "0000ffe1-0000-1000-8000-00805f9b34fb"
@@ -38,6 +39,7 @@ class BLECom():
         while True:
             try:
                 async with BleakClient(address, loop=loop) as client:
+                    self.changeStateCallback(self.connection)
                     #Sending loop
                     while True:
                         self.connection = await client.is_connected()
@@ -56,6 +58,8 @@ class BLECom():
                         if(msg != None):
                             print(await client.write_gatt_char(uuid, bytearray(msg)))
                             self.msg_queue.task_done()
+
+                self.changeStateCallback(self.connection) #Callback connection changed
             except:
                 #End thread on exit
                 if(self.exit):

@@ -5,6 +5,7 @@ import kivy
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.image import Image
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
@@ -73,7 +74,7 @@ class VoiceApp(App):
         self.actionLabel = Label(text="Action: ")
 
         #Bluetooth connection
-        self.bleLabel = Label(text="Not connected")
+        self.bleLabel = Image(source="icons/ble-off.png")
 
         #Audio queue to proces
         self.queueLabel = Label(text="To procces: "+str(self.queueSize))
@@ -89,8 +90,8 @@ class VoiceApp(App):
         layoutMid.add_widget(stopBtn)
 
         #Left layout
-        layoutLeft.add_widget(self.actionLabel)
         layoutLeft.add_widget(self.bleLabel)
+        layoutLeft.add_widget(self.actionLabel)
         layoutLeft.add_widget(self.queueLabel)
 
         Clock.schedule_interval(self.think, 1/60)
@@ -210,6 +211,16 @@ class VoiceApp(App):
             self.BLE.sendCmd(11,1)  
         elif(action == "pack" or action == "p"):
             self.BLE.sendCmd(100,1)
+
+    #Kivy change ble icon
+    def changeBleIcon(self, state):
+        print("Ahoj ja jsem petzr")
+        if(state):
+            self.bleLabel.source = "icons/ble-on.png"
+        else:
+            self.bleLabel.source = "icons/ble-off.png"
+
+        self.bleLabel.reload()
 
     #Kivy loop
     def think(self, dt):
