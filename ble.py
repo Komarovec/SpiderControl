@@ -6,10 +6,10 @@ import time
 
 
 class BLECom():
-    def __init__(self, *args):
+    def __init__(self, addr="A8:10:87:47:3D:C0", data_char="0000ffe1-0000-1000-8000-00805f9b34fb", *args):
         self.connection = False
-        self.address = "A8:10:87:47:3D:C0"
-        self.DATA_IO = "0000ffe1-0000-1000-8000-00805f9b34fb"
+        self.address = addr
+        self.DATA_IO = data_char
         self.startThread()
         self.exit = False # Exits thread next loop
 
@@ -33,7 +33,7 @@ class BLECom():
     def sendCmd(self, cmd, rep):
         self.sendMsg([0x55, 0x55, 0x05, 0x06, cmd, rep, 0x00])
 
-    #Threaded workload send and receives bytes via BLE
+    #Threaded workload sends and receives bytes via BLE
     async def run(self, address, uuid, loop):
         #Connecting loop
         while True:
@@ -55,7 +55,7 @@ class BLECom():
                                 return
 
                         if(msg != None):
-                            print(await client.write_gatt_char(uuid, bytearray(msg)))
+                            await client.write_gatt_char(uuid, bytearray(msg))
                             self.msg_queue.task_done()
             except:
                 #End thread on exit

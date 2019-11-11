@@ -18,7 +18,6 @@ from threading import Thread
 from functools import partial
 from queue import Queue
 
-
 # Record Audio
 r = sr.Recognizer()
 mic = sr.Microphone()
@@ -119,7 +118,7 @@ class VoiceApp(App):
         self.BLE.endThread()
         self.BLE.th.join()
 
-    #Send appropriate command to bluetooth
+    #Send appropriate command to bluetooth --> NEEDS CLEANUP!!!
     def checkCommand(self, msg):
         if(msg == "attention 1" or msg == "attention one" or msg == "attention" or msg == "stop"):
             self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00])
@@ -232,12 +231,10 @@ class VoiceApp(App):
 
     #Keyboard interface
     def _keyboard_closed(self):
-        print('My keyboard have been closed!')
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
         self._keyboard = None
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        print('The key', keycode[1], 'have been pressed')
         self.takeAction(keycode[1])
         
         return True
