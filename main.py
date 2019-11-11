@@ -110,7 +110,7 @@ class VoiceApp(App):
         self.recog.start()
 
         #Import after kivy
-        from BLE import BLECom
+        from ble import BLECom
         self.BLE = BLECom()
 
     #When exiting
