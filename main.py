@@ -5,6 +5,7 @@ import kivy
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -40,14 +41,12 @@ def recognize_worker():
 
         audio_queue.task_done()  # mark the audio processing job as completed in the queue
 
+def callback(recognizer, audio):
+    audio_queue.put(audio)
+
 def record(*args):
-    # start a new thread to recognize audio, while this thread focuses on listening
-    with sr.Microphone() as source:
-        try:
-            audio = r.listen(source, timeout=5)
-            audio_queue.put(audio)
-        except:
-            pass
+    global stop_listening
+    stop_listening = r.listen_in_background(mic, callback)
 
 class VoiceApp(App):
     #States
@@ -55,9 +54,22 @@ class VoiceApp(App):
     RECORD_STATE = "record"
     RECOGNIZE_STATE = "recognize"
 
+    COMMANDS = {
+        "up":["straight","forward"],
+        "down":["backward","back","backoff","reverse"],
+        "left":["left"],
+        "right":["right"],
+        "dance":["dance"],
+        "fight":["fight", "exterminate"],
+        "hi":["hi","hello","greetings","greed","morning"],
+        "top":["top","high","highest","third","upper"],
+        "mid":["middle","mid","center","second"],
+        "low":["low", "lowest", "bottom", "ground", "sit", "first"]
+    }
+
     def build(self):
         #Keyboard init
-        self._keyboard = Window.request_keyboard(self._keyboard_closed, self, 'text')
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self.root, 'text')
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
         #Init layout
@@ -72,7 +84,7 @@ class VoiceApp(App):
 
         #Record button
         self.stateText = Label(text="Idle")
-        recBtn = Button(text="Click to start recording.")
+        recBtn = ToggleButton(text="Click to start recording.")
         recBtn.bind(state=self.on_click_rec)
 
         #Stop
@@ -94,9 +106,13 @@ class VoiceApp(App):
         return mainlayout
 
     def on_click_rec(self, btn, state):
+        global stop_listening
+
         if(state == "down" and self.state == self.IDLE_STATE):
             self.state = self.RECORD_STATE
-            self.stateText.text = "Recording..."
+            record()
+        elif(state == "up"):
+            stop_listening(wait_for_stop=False)
 
     #When window created
     def on_start(self):
@@ -111,6 +127,8 @@ class VoiceApp(App):
 
     #When exiting
     def on_stop(self):
+        global stop_listening
+        stop_listening(wait_for_stop=False)
         audio_queue.join()  # block until all current audio processing jobs are done
         audio_queue.put(None)  # tell the recognize_thread to stop
         self.recognize_thread.join()  # wait for the recognize_thread to actually stop
@@ -120,23 +138,14 @@ class VoiceApp(App):
 
     #Send appropriate command to bluetooth --> NEEDS CLEANUP!!!
     def checkCommand(self, msg):
-        if(msg == "attention 1" or msg == "attention one" or msg == "attention" or msg == "stop"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x00, 0x01, 0x00])
-        elif(msg == "attention 3" or msg == "attention three"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x05, 0x01, 0x00])
-        elif(msg == "go forward" or msg == "forward"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x01, 0x00, 0x00])
-        elif(msg == "go backward" or msg == "backward"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x02, 0x00, 0x00])
-
-        elif(msg == "turn left" or msg == "left" or msg == "go left"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x03, 0x00, 0x00])
-        elif(msg == "turn right" or msg == "right" or msg == "go right"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x04, 0x00, 0x00])
-
-        elif(msg == "dance"):
-            self.BLE.sendMsg([0x55, 0x55, 0x05, 0x06, 0x0A, 0x00, 0x00])
-        
+        #For each word check commands, each command can be triggered by some word --> 3 loops
+        for word in msg.split(" "):
+            for cmd in self.COMMANDS:
+                for dt in self.COMMANDS[cmd]:
+                    #If trigger word matches command --> take action
+                    if(dt == word):
+                        self.takeAction(cmd)
+ 
     #Take action
     def takeAction(self, action, *_):
         #Reapeted action protection
@@ -200,6 +209,12 @@ class VoiceApp(App):
             elif(self.position == 0):
                 self.BLE.sendCmd(4,0) 
 
+        #Slide
+        elif(action == "q"):
+            self.BLE.sendCmd(7, 0)
+        elif(action == "e"):
+            self.BLE.sendCmd(8, 0)
+
         #Special
         elif(action == "dance" or action == "d"):
             self.BLE.sendCmd(9,1) 
@@ -209,18 +224,15 @@ class VoiceApp(App):
             self.BLE.sendCmd(10,1)  
         elif(action == "kick" or action == "k"):
             self.BLE.sendCmd(11,1)  
+        elif(action == "pack" or action == "p"):
+            self.BLE.sendCmd(100,1)
 
     #Kivy loop
     def think(self, dt):
         global msg
 
         #If recording
-        if(self.state == self.RECORD_STATE):
-            record()
-            self.stateText.text = "Recognizing..."
-            self.state = self.RECOGNIZE_STATE
-        
-        elif(msg != None):
+        if(msg != None):
             self.state = self.IDLE_STATE
             self.stateText.text = msg
 
