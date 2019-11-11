@@ -37,6 +37,7 @@ class Recognizer():
             if audio is None: return  # stop processing if the main thread is done
 
             try:
+                self.msg = "Recognizing..."
                 self.msg = self.r.recognize_google(audio)
             except:
                 self.msg = "Cannot recognize!"
@@ -47,6 +48,9 @@ class Recognizer():
         self.audio_queue.put(audio)
 
     def record(self, *_):
+        with self.mic as source:
+            self.r.adjust_for_ambient_noise(source, duration=0.5)
+        
         self.stop_listening = self.r.listen_in_background(self.mic, self.callback)
 
     def stopRecord(self):

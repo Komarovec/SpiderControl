@@ -7,7 +7,7 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.togglebutton import ToggleButton
-from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
@@ -27,12 +27,12 @@ class VoiceApp(App):
 
     COMMANDS = {
         "up":["straight","forward"],
-        "down":["backward","back","backoff","reverse"],
+        "down":["backward","backwards","back","backoff","reverse"],
         "left":["left"],
         "right":["right"],
         "dance":["dance"],
         "fight":["fight", "exterminate"],
-        "hi":["hi","hello","greetings","greed","morning"],
+        "hi":["hi","hello","greetings","greed","morning","hey"],
         "top":["top","high","highest","third","upper"],
         "mid":["middle","mid","center","second"],
         "low":["low", "lowest", "bottom", "ground", "sit", "first"]
@@ -47,10 +47,7 @@ class VoiceApp(App):
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
         #Init layout
-        mainlayout = BoxLayout(orientation="horizontal")
-        layoutLeft = BoxLayout(orientation="vertical")
-        layoutMid = BoxLayout(orientation="vertical")
-        layoutRight = BoxLayout(orientation="vertical")
+        layout = GridLayout(rows=3, padding=[50,50,50,50], spacing=50)
 
         #Control vars
         self.lastAction = None
@@ -59,44 +56,34 @@ class VoiceApp(App):
         self.step = 0 #0 - Small, 1 - Large
 
         #Record button
-        self.stateText = Label(text="Idle")
-        recBtn = ToggleButton(text="Click to start recording.")
+        self.stateText = Label(text="Idle", font_size="50sp")
+        recBtn = ToggleButton(text="Voice Control", font_size="40sp")
         recBtn.bind(state=self.on_click_rec)
 
         #Stop
-        stopBtn = Button(text="Stop")
+        stopBtn = Button(text="Stop", font_size="40sp")
         stopBtn.bind(on_press=partial(self.takeAction, "stop"))
 
-        #Kivy properties
-        self.queueSize = NumericProperty(0)
-
         #Taken action
-        self.actionLabel = Label(text="Action: ")
+        self.actionLabel = Label(text="Action: ", font_size="50sp")
 
         #Bluetooth connection
         self.bleLabel = Image(source="icons/ble-off.png")
 
         #Audio queue to proces
-        self.queueLabel = Label(text="To procces: "+str(self.queueSize))
+        self.queueLabel = Label(text="Send queue size: 0", font_size="50sp")
 
-        #Main layout preparation
-        mainlayout.add_widget(layoutLeft)
-        mainlayout.add_widget(layoutMid)
-        mainlayout.add_widget(layoutRight)
-
-        #Middle layout
-        layoutMid.add_widget(self.stateText)
-        layoutMid.add_widget(recBtn)
-        layoutMid.add_widget(stopBtn)
-
-        #Left layout
-        layoutLeft.add_widget(self.bleLabel)
-        layoutLeft.add_widget(self.actionLabel)
-        layoutLeft.add_widget(self.queueLabel)
+        #Add widgets to layout
+        layout.add_widget(self.bleLabel)
+        layout.add_widget(self.stateText)
+        layout.add_widget(self.queueLabel)
+        layout.add_widget(recBtn)
+        layout.add_widget(self.actionLabel)
+        layout.add_widget(stopBtn)
 
         Clock.schedule_interval(self.think, 1/60)
 
-        return mainlayout
+        return layout
 
     def on_click_rec(self, btn, state):
         if(state == "down" and self.state == self.IDLE_STATE):
@@ -112,7 +99,7 @@ class VoiceApp(App):
 
         #Import after kivy
         from ble import BLECom
-        self.BLE = BLECom()
+        self.BLE = BLECom(self.changeBleIcon)
 
     #When exiting
     def on_stop(self):
@@ -129,14 +116,16 @@ class VoiceApp(App):
                 for dt in self.COMMANDS[cmd]:
                     #If trigger word matches command --> take action
                     if(dt == word):
-                        self.takeAction(cmd)
+                        self.takeAction(cmd, voice=True)
  
     #Take action
-    def takeAction(self, action, *_):
+    def takeAction(self, action, voice=False, *_):
         #Reapeted action protection
         if(self.lastAction == action):
             return
         self.lastAction = action
+
+        takenAction = action 
 
         #Position change
         if(action == "top" or action == "numpad9"):
@@ -197,8 +186,10 @@ class VoiceApp(App):
         #Slide
         elif(action == "q"):
             self.BLE.sendCmd(7, 0)
+            self.changeBleIcon(True)
         elif(action == "e"):
             self.BLE.sendCmd(8, 0)
+            self.changeBleIcon(False)
 
         #Special
         elif(action == "dance" or action == "d"):
@@ -211,6 +202,10 @@ class VoiceApp(App):
             self.BLE.sendCmd(11,1)  
         elif(action == "pack" or action == "p"):
             self.BLE.sendCmd(100,1)
+        else:
+            takenAction = ""
+
+        self.actionLabel.text = "Action: {}".format(takenAction)
 
     #Kivy change ble icon
     def changeBleIcon(self, state):
@@ -225,6 +220,9 @@ class VoiceApp(App):
     #Kivy loop
     def think(self, dt):
         msg = self.recog.msg
+
+        #Update gui
+        self.queueLabel.text = "Send queue size: {}".format(self.BLE.msg_queue.qsize())
 
         #If recording
         if(msg != None):
