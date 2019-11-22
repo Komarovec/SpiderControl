@@ -1,2 +1,2 @@
-# VoiceControl
-Send voice commands via BLE.
+# SpiderControl
+Control your robotic spider via BLE using your voice of keyboard.
