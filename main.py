@@ -122,7 +122,7 @@ class VoiceApp(App):
         self.recognize_thread.start()
 
         #Import after kivy
-        from BLE import BLECom
+        from ble import BLECom
         self.BLE = BLECom()
 
     #When exiting
