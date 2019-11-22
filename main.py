@@ -15,25 +15,6 @@ from kivy.properties import NumericProperty
 
 #Function tools
 from functools import partial
-<<<<<<< HEAD
-from queue import Queue
-
-# Record Audio
-r = sr.Recognizer()
-mic = sr.Microphone()
-audio_queue = Queue()
-
-#Recognized message
-msg = None
-
-def recognize_worker():
-    global msg
-    while True:
-        # this runs in a background thread
-        audio = audio_queue.get()  # retrieve the next audio processing job from the main thread
-        if audio is None: return  # stop processing if the main thread is done
-=======
->>>>>>> testing
 
 #Custom
 from Recognizer import Recognizer
@@ -118,11 +99,7 @@ class VoiceApp(App):
 
         #Import after kivy
         from ble import BLECom
-<<<<<<< HEAD
-        self.BLE = BLECom()
-=======
         self.BLE = BLECom(self.changeBleIcon)
->>>>>>> testing
 
     #When exiting
     def on_stop(self):

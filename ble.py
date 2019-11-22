@@ -5,12 +5,8 @@ from queue import Queue
 import time
 
 class BLECom():
-<<<<<<< HEAD
-    def __init__(self, addr="A8:10:87:47:3D:C0", data_char="0000ffe1-0000-1000-8000-00805f9b34fb", *args):
-=======
     def __init__(self, callback, *args):
         self.changeStateCallback = callback
->>>>>>> testing
         self.connection = False
         self.address = addr
         self.DATA_IO = data_char
