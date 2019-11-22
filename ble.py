@@ -8,8 +8,8 @@ class BLECom():
     def __init__(self, callback, *args):
         self.changeStateCallback = callback
         self.connection = False
-        self.address = addr
-        self.DATA_IO = data_char
+        self.address = "A8:10:87:47:3D:C0"
+        self.DATA_IO = "0000ffe1-0000-1000-8000-00805f9b34fb"
         self.startThread()
         self.exit = False # Exits thread next loop
 
