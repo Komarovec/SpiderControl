@@ -12,7 +12,6 @@ Následující příkazy proveďte v příkazovém řádku cmd nebo v MS PowerSh
 ```
 pip install -r requirements.txt
 ```
-<br>
 3. Jediný požadavek, který zde není definován je PyAudio a musíme ho nainstalovat zvlášť:
 ```
 pipwin install pyaudio
