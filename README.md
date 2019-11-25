@@ -20,12 +20,13 @@ pipwin install pyaudio
 ```
 python main.py
 ```
-<br>
+
 # Ovládání
 Ikonka vlevo nahoře indikuje připojení k Bluetoothu. (Někdy může zmizet :) )<br>
-Pro ovládání robota klávesnící stačí jednou stisknout klávesu odpovídající příkazu, <br>
+Pro ovládání robota klávesnící stačí jednou stisknout klávesu odpovídající příkazu,<br>
 tento příkaz bude poslán přes bluetooth, alternativně se navýší hodnota "Send queue size" a čeká na připojení.<br>
-Keybinds:
+
+### Keybinds:
 - Šipka nahoru - Dopředu
 - Šipka dolu - Dozadu
 - Šipka doleva - Doleva
@@ -37,16 +38,17 @@ Keybinds:
 - NUMPAD9 - Vysoká pozice
 - NUMPAD6 - Střední pozice
 - NUMPAD3 - Nízká pozice
-<br>
+
 # Hlasové ovládání
 Stisknutím tlačítka "Voice Control", se aktivuje nahrávání výchozího mikrofonu a posílání k rozboru hlasu.<br>
 Tyto operace mají vysokou odezvu a proto nedoporučuji takto robota ovládat.<br>
-Nejlépe fungující příkazy:<br>
+
+### Nejlépe fungující příkazy:<br>
 - "Dance" - Tanec
 - "Fight" - Útok
 - "Hi/Hello" - Zamávání
-<br>
-Ostatní:
+
+### Ostatní:
 - "Forward" - Chůze vpřed
 - "Backward" - Chůze vzad
 - "Turn left" - Otočit vlevo
