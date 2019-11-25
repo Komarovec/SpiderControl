@@ -8,7 +8,12 @@ class Recognizer():
     def __init__(self, *_):
         #Record Audio
         self.r = sr.Recognizer()
-        self.mic = sr.Microphone()
+
+        try:
+            self.mic = sr.Microphone()
+        except:
+            self.mic = None # No default microphone
+
         self.audio_queue = Queue()
 
         #Recognized message
@@ -48,6 +53,8 @@ class Recognizer():
         self.audio_queue.put(audio)
 
     def record(self, *_):
+        if(self.mic == None): return;
+
         with self.mic as source:
             self.r.adjust_for_ambient_noise(source, duration=0.5)
         
