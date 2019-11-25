@@ -7,19 +7,17 @@ Aplikace je testovaná pouze na MS Windows!<br>
 Doporučená verze interpreteru Python 3.6 a vyšší.<br>
 Následující příkazy proveďte v příkazovém řádku cmd nebo v MS PowerShell.<br>
 <br>
-1) Po rozbalení či naklonování repozitáře vstupte do složky, ve které se nachází python skripty.<br>
-<br>
-2) Ve virtuální prostředí nebo v globální instalaci nejprve nainstalujeme všechny požadavky, definované v souboru requirements.txt:<br>
+1. Po rozbalení či naklonování repozitáře vstupte do složky, ve které se nachází python skripty.<br>
+2. Ve virtuální prostředí nebo v globální instalaci nejprve nainstalujeme všechny požadavky, definované v souboru requirements.txt:
 ```
 pip install -r requirements.txt
 ```
 <br>
-3) Jediný požadavek, který zde není definován je PyAudio a musíme ho nainstalovat zvlášť:
+3. Jediný požadavek, který zde není definován je PyAudio a musíme ho nainstalovat zvlášť:
 ```
 pipwin install pyaudio
 ```
-<br>
-4) Hlavní skript by nyní měl být spustitelný:
+4. Hlavní skript by nyní měl být spustitelný:
 ```
 python main.py
 ```
