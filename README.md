@@ -1,5 +1,5 @@
 # SpiderControl
-Control your robotic spider via BLE using your voice of keyboard.
+Control your robotic spider via BLE using your voice or keyboard.
 
 # Spuštění
 Aplikace je testovaná pouze na MS Windows!<br>
