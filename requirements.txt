@@ -14,7 +14,7 @@ Kivy-Garden==0.1.4
 packaging==19.2
 pipwin==0.4.6
 PyAudio==0.2.11
-Pygments==2.4.2
+Pygments==2.7.4
 pyjsparser==2.7.1
 pyparsing==2.4.5
 PyPrind==2.11.2
